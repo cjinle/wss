@@ -7,6 +7,99 @@
     <title>wss test</title>
 </head>
 <body>
+    <div>
+        <input type="text" id="wsurl" value="ws://192.168.56.101:8080" />
+        <button onclick="wsclient.connect()">Connect</button>
+        <button onclick="wsclient.close()">Close</button>
+    </div><br><br>
+    <div>
+        <select id="cmd">
+            <option>1</option>
+            <option>2</option>
+        </select>
+        <input type="text" id="content" />
+        <button onclick="wsclient.send()">Send</button>
+    </div>
+
+    <p>press F12, view the data</p>
     
 </body>
+<script>
+const pack = function (id, str) {
+    if (!str) {
+        console.log("error str", str)
+        return new ArrayBuffer(0)
+    }
+    let len = str.length
+    let buffer = new ArrayBuffer(8 + len)
+    let view = new DataView(buffer)
+    view.setUint32(0, len)
+    view.setUint32(4, id)
+    for (let i = 0; i < len; i++) {
+        let code = str.charCodeAt(i)
+        view.setInt8(8 + i, code)
+    }
+    return buffer
+}
+const unpack = function (buffer) {
+    if (!buffer || !(buffer instanceof ArrayBuffer)) {
+        console.log("buffer type err", buffer)
+        return
+    }
+    let view = new DataView(buffer)
+    let msg = {}
+    msg.len = view.getUint32(0)
+    msg.id = view.getUint32(4)
+    msg.buffer = buffer.slice(8)
+    msg.data = {}
+
+    let enc = new TextDecoder("utf-8")
+    try {
+        msg.data = JSON.parse(enc.decode(new Int8Array(msg.buffer)))
+    } catch (error) {
+        console.log(error, enc.decode(msg.buffer))
+    }
+    return msg
+}
+
+let wsclient = {
+    socket: null,
+    isConnected: false,
+    connect() {
+        if (this.isConnected) {
+            this.socket.close()
+            this.socket = null
+            this.isConnected = false
+        }
+        let wsurl = document.getElementById('wsurl').value
+        this.socket = new WebSocket(wsurl)
+        this.socket.binaryType = "arraybuffer"
+        this.socket.onmessage = (event) => {
+            console.log("receive", event.data)
+            let msg = unpack(event.data)
+            console.log("msg", msg)
+        }
+        this.socket.onclose = (event) => {
+            console.log("close", event)
+            this.isConnected = false
+        }
+        this.isConnected = true
+    },
+    close() {
+        if (!this.isConnected) {
+            return
+        }
+        this.socket.close()
+    },
+    send() {
+        if (!this.isConnected) {
+            this.connect()
+            return
+        }
+        let cmd = document.getElementById('cmd').value
+        let content = document.getElementById('content').value
+        this.socket.send(pack(Number(`0x${cmd}`), content))
+    }
+}
+</script>
 </html>
