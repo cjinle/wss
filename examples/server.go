@@ -1,10 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/binary"
-	"encoding/hex"
-	"fmt"
 	"log"
 	"time"
 
@@ -31,10 +27,6 @@ type Api struct {
 func (a *Api) Handle(req wss.IRequest) {
 	log.Println(req.GetMsg())
 	req.GetConnection().SendBuffMsg(req.GetMsgID(), req.GetData())
-	if req.GetMsgID() == 0x02 {
-		n := req.GetConnection().(*wss.Connection).WSServer.GetConnMgr().Len()
-		req.GetConnection().SendBuffMsg(0x03, []byte(`{"conn":`+fmt.Sprintf("%d", n)+`}`))
-	}
 }
 
 func OnConnectionAdd(conn wss.IConnection) {
@@ -47,14 +39,6 @@ func OnConnectionLost(conn wss.IConnection) {
 
 func AfterServe() {
 	log.Println("[api] start serving")
-	dataBuff := bytes.NewBuffer([]byte{})
-
-	binary.Write(dataBuff, binary.LittleEndian, uint32(0x12345678))
-	fmt.Println(hex.EncodeToString(dataBuff.Bytes()))
-
-	dataBuff = bytes.NewBuffer([]byte{})
-	binary.Write(dataBuff, binary.BigEndian, uint32(0x12345678))
-	fmt.Println(hex.EncodeToString(dataBuff.Bytes()))
 }
 
 func OnShutdown() {
