@@ -1,2 +1,6 @@
-# wss
-websocket server
+# WebScoket Server
+simple websocket server
+
+## useage
+
+
