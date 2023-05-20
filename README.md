@@ -1,6 +1,13 @@
 # WebScoket Server
 simple websocket server
 
-## useage
+## feature
 
+ - connection management
+ - routing management
+ - package management
+
+## client
+
+https://github.com/cjinle/wss_client
 
