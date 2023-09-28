@@ -1,11 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"time"
 
 	"github.com/cjinle/wss"
 )
+
+const CMD_LOGIN_REQ uint32 = 0x1
+const CMD_TEST_REQ uint32 = 0x2
 
 func main() {
 	ser := wss.NewServer("0.0.0.0:8080", "/", "wss")
@@ -24,9 +28,22 @@ type Api struct {
 	wss.BaseRouter
 }
 
-func (a *Api) Handle(req wss.IRequest) {
+type Data struct {
+	A int32 `json:"a"`
+	B bool  `json:"b"`
+}
+
+func (api *Api) Handle(req wss.IRequest) {
 	log.Println(req.GetMsg())
+	if req.GetMsgID() == CMD_TEST_REQ {
+		var d Data
+		err := json.Unmarshal(req.GetData(), &d)
+		if err == nil {
+			log.Printf("json data a: %d, b: %t", d.A, d.B)
+		}
+	}
 	req.GetConnection().SendBuffMsg(req.GetMsgID(), req.GetData())
+
 }
 
 func OnConnectionAdd(conn wss.IConnection) {
